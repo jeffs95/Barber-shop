@@ -6,8 +6,14 @@ use App\Filament\Resources\ProductoResource\Pages;
 use App\Filament\Resources\ProductoResource\RelationManagers\StockSucursalesRelationManager;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -19,7 +25,10 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductoResource extends Resource
 {
@@ -66,6 +75,13 @@ class ProductoResource extends Resource
     public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
     {
         return auth()->user()?->esDuenio() ?? false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        // Incluye los productos eliminados; el TrashedFilter decide si se muestran.
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 
     public static function form(Schema $schema): Schema
@@ -240,11 +256,24 @@ class ProductoResource extends Resource
                     ->label('Estado')
                     ->trueLabel('Solo activos')
                     ->falseLabel('Solo inactivos'),
+
+                TrashedFilter::make(),
             ])
             ->defaultSort('nombre')
             ->actions([
                 EditAction::make(),
                 DeleteAction::make(),
+                RestoreAction::make()
+                    ->visible(fn (): bool => auth()->user()?->esDuenio() ?? false),
+                ForceDeleteAction::make()
+                    ->visible(fn (): bool => auth()->user()?->esDuenio() ?? false),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                ]),
             ]);
     }
 

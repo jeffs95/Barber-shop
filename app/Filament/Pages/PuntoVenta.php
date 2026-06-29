@@ -35,6 +35,9 @@ class PuntoVenta extends Page
     // --- Cita vinculada (cuando se viene desde "Cobrar" en una cita) ---
     public ?int $citaId = null;
 
+    // --- Sucursal activa del POS (el dueño puede cambiarla; el admin la tiene fija) ---
+    public ?int $sucursalId = null;
+
     // --- Estado de caja ---
     public ?int $cajaId = null;
 
@@ -56,12 +59,37 @@ class PuntoVenta extends Page
 
     public function mount(): void
     {
-        $caja = Caja::cajaAbierta();
-        $this->cajaId = $caja?->id;
+        $user = auth()->user();
+
+        if ($user?->esAdminSucursal() && $user->getSucursalId()) {
+            // El admin opera siempre en su sucursal.
+            $this->sucursalId = $user->getSucursalId();
+        } else {
+            // Dueño / acceso global: arranca donde haya una caja abierta, o en la primera sucursal.
+            $this->sucursalId = Caja::where('estado', 'abierta')->value('sucursal_id')
+                ?? Sucursal::where('es_activa', true)->orderBy('nombre')->value('id');
+        }
+
+        $this->sincronizarCaja();
 
         if ($citaId = (int) request()->query('cita_id')) {
             $this->precargarCita($citaId);
         }
+    }
+
+    public function updatedSucursalId(): void
+    {
+        // Al cambiar de sede, el empleado elegido puede ya no pertenecer a ella.
+        $this->empleadoId = null;
+        $this->sincronizarCaja();
+    }
+
+    /** Deriva la caja abierta a partir de la sucursal activa. */
+    private function sincronizarCaja(): void
+    {
+        $this->cajaId = $this->sucursalId
+            ? Caja::cajaAbiertaDe($this->sucursalId)?->id
+            : null;
     }
 
     private function precargarCita(int $citaId): void
@@ -75,6 +103,12 @@ class PuntoVenta extends Page
         $this->citaId    = $cita->id;
         $this->empleadoId = $cita->empleado_id;
         $this->clienteId  = $cita->cliente_id;
+
+        // Cobrar en la sucursal donde se atiende la cita.
+        if ($cita->sucursal_id) {
+            $this->sucursalId = $cita->sucursal_id;
+            $this->sincronizarCaja();
+        }
 
         // Pre-cargar servicios de la cita con el precio acordado
         foreach ($cita->servicios as $servicio) {
@@ -115,7 +149,25 @@ class PuntoVenta extends Page
     #[Computed]
     public function empleados()
     {
-        return Empleado::where('es_activo', true)->with('usuario')->get();
+        return Empleado::where('es_activo', true)
+            ->when($this->sucursalId, fn ($q) => $q->where('sucursal_id', $this->sucursalId))
+            ->with('usuario')
+            ->get();
+    }
+
+    #[Computed]
+    public function sucursales()
+    {
+        return Sucursal::where('es_activa', true)->orderBy('nombre')->get(['id', 'nombre']);
+    }
+
+    #[Computed]
+    public function puedeElegirSucursal(): bool
+    {
+        $user = auth()->user();
+
+        // El admin de sucursal queda fijo a su sede; el dueño (global) puede cambiar.
+        return ! ($user?->esAdminSucursal() && $user->getSucursalId());
     }
 
     #[Computed]

@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Filament\Resources\ClienteResource\Pages;
+
+use App\Filament\Resources\ClienteResource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Resources\Pages\EditRecord;
+
+class EditCliente extends EditRecord
+{
+    protected static string $resource = ClienteResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            DeleteAction::make(),
+            RestoreAction::make(),
+            ForceDeleteAction::make(),
+        ];
+    }
+}

@@ -5,7 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Concerns\FiltraPorSucursal;
 use App\Filament\Resources\CajaResource\Pages;
 use App\Models\Caja;
+use App\Models\Sucursal;
 use App\Models\Usuario;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -58,6 +60,27 @@ class CajaResource extends Resource
                         ->options(Usuario::all()->mapWithKeys(fn ($u) => [$u->id => $u->nombre . ' ' . $u->apellido]))
                         ->searchable()
                         ->nullable(),
+
+                    Select::make('sucursal_id')
+                        ->label('Sucursal')
+                        ->options(Sucursal::where('es_activa', true)->orderBy('nombre')->pluck('nombre', 'id'))
+                        ->default(fn () => auth()->user()?->getSucursalId())
+                        // El admin de sucursal no puede cambiar de sede; el dueño sí elige.
+                        ->disabled(fn () => auth()->user()?->esAdminSucursal() && auth()->user()?->getSucursalId())
+                        ->dehydrated()
+                        ->required()
+                        ->rule(static function (?Caja $record): Closure {
+                            return static function (string $attribute, $value, Closure $fail) use ($record): void {
+                                // Solo se valida al abrir una caja (nueva o aún abierta).
+                                if ($record && ! $record->estaAbierta()) {
+                                    return;
+                                }
+
+                                if ($value && Caja::hayCajaAbiertaEn((int) $value, $record?->id)) {
+                                    $fail('Ya hay una caja abierta en esa sucursal. Ciérrala antes de abrir otra.');
+                                }
+                            };
+                        }),
 
                     DateTimePicker::make('fecha_apertura')
                         ->label('Fecha y hora de apertura')
@@ -121,6 +144,12 @@ class CajaResource extends Resource
                 TextColumn::make('id')
                     ->label('#')
                     ->sortable(),
+
+                TextColumn::make('sucursal.nombre')
+                    ->label('Sucursal')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('—'),
 
                 TextColumn::make('usuario.nombre')
                     ->label('Responsable')

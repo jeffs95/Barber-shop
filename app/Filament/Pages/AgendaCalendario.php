@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Filament\Resources\CitaResource;
 use App\Models\Cita;
 use App\Models\Empleado;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -88,6 +89,17 @@ class AgendaCalendario extends Page
         }
 
         $nueva = \Carbon\Carbon::parse($nuevaFechaHora);
+
+        if (Cita::haySolapamiento($cita->empleado_id, $nueva, $cita->duracion_estimada_min, $cita->id)) {
+            Notification::make()
+                ->title('Horario ocupado')
+                ->body('El barbero ya tiene otra cita en esa franja. Se revirtió el cambio.')
+                ->danger()
+                ->send();
+
+            return false;
+        }
+
         $cita->update(['fecha_hora' => $nueva]);
 
         return true;

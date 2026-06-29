@@ -69,6 +69,24 @@ class Caja extends Model
         return static::where('estado', 'abierta')->latest()->first();
     }
 
+    /** Caja abierta de una sucursal específica (solo puede haber una). */
+    public static function cajaAbiertaDe(int $sucursalId): ?self
+    {
+        return static::where('estado', 'abierta')
+            ->where('sucursal_id', $sucursalId)
+            ->latest()
+            ->first();
+    }
+
+    /** ¿Existe ya una caja abierta en esta sucursal? (opcionalmente excluye una caja). */
+    public static function hayCajaAbiertaEn(int $sucursalId, ?int $exceptoId = null): bool
+    {
+        return static::where('estado', 'abierta')
+            ->where('sucursal_id', $sucursalId)
+            ->when($exceptoId, fn ($q) => $q->whereKeyNot($exceptoId))
+            ->exists();
+    }
+
     public function calcularMontoCierreEsperado(): float
     {
         $ventasEfectivo = $this->ventas()

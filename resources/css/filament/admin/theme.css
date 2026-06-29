@@ -4,3 +4,31 @@
 @source '../../../views/**/*.blade.php';
 @source '../../../../app/Filament/**/*.php';
 @source '../../../../app/Http/**/*.php';
+
+/* ─── Login con diseño de dos columnas ─── */
+/* El panel de marca se oculta en móvil; el formulario ocupa todo el ancho. */
+.fi-login-branding {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    /* Convierte el layout centrado del login en dos columnas lado a lado. */
+    .fi-simple-layout {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+        min-height: 100vh;
+    }
+
+    .fi-login-branding {
+        display: block;
+        flex: 1 1 50%;
+    }
+
+    .fi-simple-main-ctn {
+        flex: 1 1 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}

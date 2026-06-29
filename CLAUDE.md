@@ -96,6 +96,17 @@ database/
 - [x] Fase 6: Reportes y RR.HH. (ReporteVentas, ReporteCitas, ReporteComisiones, ReporteInventario + HorariosRelationManager en EmpleadoResource)
 - [ ] Fase 7: Extras (membresías, puntos, comunicaciones)
 
+### Mejoras (2026-06-28)
+- [x] Validación de solapamiento de citas (`Cita::haySolapamiento()` — en formulario, drag&drop del calendario y reserva pública)
+- [x] Una caja abierta por sucursal (`Caja::cajaAbiertaDe()` + índice único parcial; selector de sucursal en POS para el dueño)
+- [x] Soft deletes en `cliente`, `empleado`, `producto` (+ `ClienteResource` nuevo con historial de citas)
+- [x] Página pública de reservas `/reservar` (Livewire `ReservaPublica` + `DisponibilidadService` con slots automáticos; cita queda `pendiente`/`enlace`)
+- [x] Landing page pública en `/` (`LandingController` + `landing.blade.php`): hero, servicios por categoría, equipo, sucursales, contacto y "trabaja con nosotros". El asistente de reservas va embebido (`@livewire('reserva-publica', ['embebido' => true])`). Tema oscuro forzado (`<html class="dark">`); textos de contacto/redes son placeholders editables en la vista.
+- [x] Bandeja de solicitudes (`SolicitudCitaResource`, /admin/solicitudes): segundo resource sobre el modelo `Cita` que muestra solo `origen=enlace` + `estado=pendiente`, con acciones Aprobar (→confirmada) y Rechazar (→cancelada). `CitaResource` excluye esas mismas para no mezclarlas. Ambos reutilizan `FiltraPorSucursal::aplicarScopesSucursal()` en su `getEloquentQuery`.
+- [x] Selector de tema claro/oscuro/sistema en la web pública (landing + /reservar). `app.css` usa `@custom-variant dark (&:where(.dark, .dark *))` → el modo oscuro es **por clase `.dark`** (no por `prefers-color-scheme`); un script anti-flash en el `<head>` aplica la clase según `localStorage['theme']`, y el toggle (`<x-tema-switcher/>` + función JS `themeToggle()`) la cambia. El panel admin NO se afecta (usa `theme.css` y el dark mode propio de Filament).
+- [x] Login del panel rediseñado (split-screen + formulario en español): página `App\Filament\Auth\Login` extiende BaseLogin y sobreescribe heading/subheading + los componentes del formulario (`getEmailFormComponent`, `getPasswordFormComponent`, `getRememberFormComponent`, `getAuthenticateFormAction`) para etiquetas en español, íconos prefijo (heroicon-o-envelope / heroicon-o-lock-closed), placeholders y botón "Ingresar al panel". El panel de marca (columna izquierda) se inyecta con `->renderHook(PanelsRenderHook::SIMPLE_LAYOUT_START, ..., scopes: Login::class)` → vista `resources/views/filament/login/branding.blade.php`. El layout de 2 columnas lo arma CSS en `theme.css` (`.fi-simple-layout` → flex row en ≥1024px; el panel se oculta en móvil). La lógica de autenticación de Filament queda intacta.
+- La cita hereda `sucursal_id` de su barbero vía hook `saving` en el modelo `Cita`
+
 ## Filament v5 — Cambios de API importantes
 - `form()` recibe `Filament\Schemas\Schema`, NO `Filament\Forms\Form`
 - `Section` es `Filament\Schemas\Components\Section` (no Forms)
@@ -103,6 +114,7 @@ database/
 - `$navigationIcon` type: `string|BackedEnum|null`
 - `$navigationGroup` type: `string|UnitEnum|null`
 - En páginas custom (`Page`), `$view` es **NO estático**: `protected string $view = '...'`
+- **`Get`/`Set` en closures** (reglas, `afterStateUpdated`, etc.) son `Filament\Schemas\Components\Utilities\Get` / `...\Set`, **NO** `Filament\Forms\Get`. Tiparlos con el namespace viejo lanza un `TypeError` en runtime que el linter no detecta.
 
 ## Tema CSS de Filament v5 (Tailwind 4 + Vite)
 El tema del panel está en `resources/css/filament/admin/theme.css`:

@@ -1,4 +1,32 @@
 <x-filament-panels::page>
+    {{-- Selector de sucursal — solo para el dueño / acceso global --}}
+    @if ($this->puedeElegirSucursal)
+        <div class="flex items-center gap-3 px-4 py-3
+                    bg-white dark:bg-gray-800
+                    border border-gray-200 dark:border-gray-700
+                    rounded-xl shadow-sm">
+            <x-filament::icon icon="heroicon-o-building-storefront" class="h-5 w-5 text-amber-600 shrink-0" />
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-300 shrink-0">Sucursal:</label>
+            <select wire:model.live="sucursalId"
+                    class="rounded-lg border-gray-300 dark:border-gray-600
+                           dark:bg-gray-700 dark:text-white text-sm shadow-sm
+                           focus:ring-amber-500 focus:border-amber-500">
+                @foreach ($this->sucursales as $sucursal)
+                    <option value="{{ $sucursal->id }}">{{ $sucursal->nombre }}</option>
+                @endforeach
+            </select>
+            @if ($this->caja)
+                <span class="ml-auto text-xs text-green-600 font-medium flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span> Caja abierta
+                </span>
+            @else
+                <span class="ml-auto text-xs text-red-500 font-medium flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-red-400"></span> Sin caja
+                </span>
+            @endif
+        </div>
+    @endif
+
     @if (! $this->cajaId)
         {{-- Sin caja abierta --}}
         <div class="flex flex-col items-center justify-center py-16 gap-4">

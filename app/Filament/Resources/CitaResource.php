@@ -9,6 +9,7 @@ use App\Filament\Resources\CitaResource\RelationManagers\ServiciosRelationManage
 use App\Models\Cita;
 use App\Models\Empleado;
 use App\Models\Servicio;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -19,8 +20,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Carbon;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -43,7 +46,8 @@ class CitaResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return (string) Cita::whereDate('fecha_hora', now()->toDateString())
+        return (string) static::getEloquentQuery()
+            ->whereDate('fecha_hora', now()->toDateString())
             ->whereIn('estado', ['pendiente', 'confirmada'])
             ->count();
     }
@@ -51,6 +55,14 @@ class CitaResource extends Resource
     public static function getNavigationBadgeColor(): string
     {
         return 'warning';
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        // Las solicitudes online sin procesar viven en su propio apartado
+        // (SolicitudCitaResource); aquí solo se ven las citas ya gestionadas.
+        return static::aplicarScopesSucursal(parent::getEloquentQuery())
+            ->whereNot(fn (Builder $q) => $q->where('origen', 'enlace')->where('estado', 'pendiente'));
     }
 
     public static function canViewAny(): bool
@@ -95,7 +107,21 @@ class CitaResource extends Resource
                     ->label('Fecha y hora')
                     ->required()
                     ->seconds(false)
-                    ->minutesStep(5),
+                    ->minutesStep(5)
+                    ->rule(static function (Get $get, ?Cita $record): Closure {
+                        return static function (string $attribute, $value, Closure $fail) use ($get, $record): void {
+                            $empleadoId = (int) $get('empleado_id');
+                            $duracion   = (int) $get('duracion_estimada_min') ?: 30;
+
+                            if (! $empleadoId || ! $value) {
+                                return;
+                            }
+
+                            if (Cita::haySolapamiento($empleadoId, Carbon::parse($value), $duracion, $record?->id)) {
+                                $fail('El barbero ya tiene una cita activa que se traslapa con ese horario.');
+                            }
+                        };
+                    }),
 
                 TextInput::make('duracion_estimada_min')
                     ->label('Duración estimada (min)')

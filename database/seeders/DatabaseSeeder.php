@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             CitaSeeder::class,
             InventarioSeeder::class,
             VentaSeeder::class,
+            HorarioSeeder::class,
         ]);
     }
 }

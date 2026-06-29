@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Modo oscuro controlado por la clase .dark en <html> (toggle manual en la web pública). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source '../../vendor/filament/**/*.blade.php';
 @source '../../vendor/filament/**/*.php';
 @source '../../resources/views/**/*.blade.php';
