@@ -27,7 +27,7 @@ class LandingController extends Controller
             ->get();
 
         $productos = Producto::where('es_activo', true)
-            ->where('stock_actual', '>', 0)
+            ->orderBy('stock_actual', 'desc')
             ->orderBy('nombre')
             ->get()
             ->groupBy(fn (Producto $p) => Producto::categoriaLabel($p->categoria));

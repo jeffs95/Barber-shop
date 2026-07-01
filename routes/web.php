@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ImagenEmpleadoController;
 use App\Http\Controllers\ImagenProductoController;
 use App\Http\Controllers\LandingController;
 use App\Livewire\ReservaPublica;
@@ -13,6 +14,10 @@ Route::get('/', LandingController::class)->name('inicio');
 Route::get('/img/producto/{filename}', ImagenProductoController::class)
     ->where('filename', '.+')
     ->name('img.producto');
+
+Route::get('/img/empleado/{filename}', ImagenEmpleadoController::class)
+    ->where('filename', '.+')
+    ->name('img.empleado');
 
 Route::get('/reservar', ReservaPublica::class)
     ->middleware('throttle:60,1')

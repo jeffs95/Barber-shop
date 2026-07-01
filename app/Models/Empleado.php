@@ -20,6 +20,7 @@ class Empleado extends Model
         'rol',
         'porcentaje_comision',
         'color_agenda',
+        'foto',
         'es_activo',
         'telefono',
         'direccion',

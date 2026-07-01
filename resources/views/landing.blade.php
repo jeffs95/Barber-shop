@@ -168,11 +168,28 @@
             @else
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                     @foreach ($barberos as $barbero)
-                        <div class="text-center p-6 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-white/5">
-                            <span class="inline-flex items-center justify-center w-20 h-20 rounded-full text-2xl font-bold text-gray-950 mb-3"
-                                  style="background-color: {{ $barbero->color_agenda ?? '#f59e0b' }}">
-                                {{ mb_substr($barbero->nombre_completo, 0, 1) }}
-                            </span>
+                        @php
+                            $fotoEmpleado = null;
+                            if ($barbero->foto) {
+                                $fotoEmpleado = str_contains($barbero->foto, '/')
+                                    ? asset('storage/' . $barbero->foto)
+                                    : route('img.empleado', $barbero->foto);
+                            }
+                        @endphp
+                        <div class="text-center p-6 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-white/5 hover:border-amber-400/40 hover:shadow-md transition-all">
+                            @if ($fotoEmpleado)
+                                <img
+                                    src="{{ $fotoEmpleado }}"
+                                    alt="{{ $barbero->nombre_completo }}"
+                                    class="w-20 h-20 rounded-full object-cover mx-auto mb-3 ring-2 ring-amber-400/30"
+                                    loading="lazy"
+                                >
+                            @else
+                                <span class="inline-flex items-center justify-center w-20 h-20 rounded-full text-2xl font-bold text-gray-950 mb-3"
+                                      style="background-color: {{ $barbero->color_agenda ?? '#f59e0b' }}">
+                                    {{ mb_substr($barbero->nombre_completo, 0, 1) }}
+                                </span>
+                            @endif
                             <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ $barbero->nombre_completo }}</h4>
                             <p class="text-xs text-amber-600/90 dark:text-amber-400/80 uppercase tracking-wider mt-1">Barbero</p>
                         </div>
@@ -203,13 +220,16 @@
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                         @foreach ($items as $producto)
-                            <div class="group flex flex-col rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 bg-white dark:bg-gray-950 hover:border-amber-400/50 hover:shadow-lg dark:hover:shadow-amber-900/10 transition-all">
+                            @php $agotado = $producto->stock_actual <= 0; @endphp
+                            <div class="group flex flex-col rounded-2xl overflow-hidden border transition-all
+                                {{ $agotado
+                                    ? 'border-gray-200 dark:border-white/5 bg-white dark:bg-gray-950 opacity-60 cursor-not-allowed'
+                                    : 'border-gray-200 dark:border-white/5 bg-white dark:bg-gray-950 hover:border-amber-400/50 hover:shadow-lg dark:hover:shadow-amber-900/10' }}">
 
                                 {{-- Imagen --}}
-                                <div class="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                <div class="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
                                     @if ($producto->foto)
                                         @php
-                                            // Si contiene '/' → está en disco public local; si no → está en FTP (proxy)
                                             $fotoUrl = str_contains($producto->foto, '/')
                                                 ? asset('storage/' . $producto->foto)
                                                 : route('img.producto', $producto->foto);
@@ -217,17 +237,18 @@
                                         <img
                                             src="{{ $fotoUrl }}"
                                             alt="{{ $producto->nombre }}"
-                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            class="w-full h-full object-cover {{ $agotado ? '' : 'group-hover:scale-105' }} transition-transform duration-300"
                                             loading="lazy"
                                         >
                                     @else
                                         <div class="w-full h-full flex items-center justify-center">
                                             <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                                             </svg>
                                         </div>
                                     @endif
-                                </div>
+
+                                    </div>
 
                                 {{-- Info --}}
                                 <div class="flex flex-col flex-1 p-4">
@@ -240,13 +261,27 @@
                                     @if ($producto->descripcion)
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ $producto->descripcion }}</p>
                                     @endif
+
+                                    {{-- Stock --}}
+                                    <div class="mt-2">
+                                        @if ($agotado)
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-red-500 dark:text-red-400">
+                                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                Sin stock
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                {{ $producto->stock_actual }} {{ $producto->unidad }}{{ $producto->stock_actual != 1 ? 's' : '' }} disponibles
+                                            </span>
+                                        @endif
+                                    </div>
+
                                     <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-white/5">
-                                        <span class="text-base font-bold text-amber-600 dark:text-amber-400">
+                                        <span class="text-base font-bold {{ $agotado ? 'text-gray-400 dark:text-gray-600' : 'text-amber-600 dark:text-amber-400' }}">
                                             Q{{ number_format($producto->precio_venta, 2) }}
                                         </span>
-                                        <span class="text-[11px] text-gray-400 dark:text-gray-500">
-                                            {{ $producto->unidad }}
-                                        </span>
+                                        <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ $producto->unidad }}</span>
                                     </div>
                                 </div>
                             </div>

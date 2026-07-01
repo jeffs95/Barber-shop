@@ -18,6 +18,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -104,6 +105,22 @@ class EmpleadoResource extends Resource
                     Toggle::make('es_activo')
                         ->label('Activo')
                         ->default(true)
+                        ->columnSpanFull(),
+                ]),
+
+            Section::make('Foto de perfil')
+                ->description('Se transfiere al FTP automáticamente al guardar.')
+                ->schema([
+                    FileUpload::make('foto')
+                        ->label('Fotografía')
+                        ->disk('public')
+                        ->directory('empleados')
+                        ->image()
+                        ->imagePreviewHeight('180')
+                        ->maxSize(3072)
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                        ->nullable()
+                        ->dehydrated(fn (?string $state): bool => filled($state))
                         ->columnSpanFull(),
                 ]),
 
