@@ -14,6 +14,7 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -141,6 +142,22 @@ class ProductoResource extends Resource
                     Toggle::make('es_activo')
                         ->label('Activo')
                         ->default(true),
+                ]),
+
+            Section::make('Fotografía del producto')
+                ->description('La imagen se sube localmente y se transfiere al FTP automáticamente al guardar.')
+                ->schema([
+                    FileUpload::make('foto')
+                        ->label('Imagen')
+                        ->disk('public')
+                        ->directory('productos')
+                        ->image()
+                        ->imagePreviewHeight('200')
+                        ->maxSize(3072)
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                        ->nullable()
+                        ->dehydrated(fn (?string $state): bool => filled($state))
+                        ->columnSpanFull(),
                 ]),
 
             Section::make('Precios')

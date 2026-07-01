@@ -3,15 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Empleado;
+use App\Models\Producto;
 use App\Models\Servicio;
 use App\Models\Sucursal;
 
 class LandingController extends Controller
 {
-    /**
-     * Página pública de la barbería: catálogo de servicios, equipo, sucursales
-     * y el asistente de reservas embebido.
-     */
     public function __invoke()
     {
         $servicios = Servicio::where('es_activo', true)
@@ -29,6 +26,12 @@ class LandingController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view('landing', compact('servicios', 'barberos', 'sucursales'));
+        $productos = Producto::where('es_activo', true)
+            ->where('stock_actual', '>', 0)
+            ->orderBy('nombre')
+            ->get()
+            ->groupBy(fn (Producto $p) => Producto::categoriaLabel($p->categoria));
+
+        return view('landing', compact('servicios', 'barberos', 'sucursales', 'productos'));
     }
 }

@@ -47,6 +47,30 @@ return [
             'report' => false,
         ],
 
+        'ftp_documents' => [
+            'driver'   => 'ftp',
+            'host'     => env('FTP_HOST'),
+            'username' => env('FTP_USERNAME'),
+            'password' => env('FTP_PASSWORD'),
+            'port'     => (int) env('FTP_PORT', 21),
+            'root'     => 'Barber-shop',
+            'passive'  => true,
+            'ssl'      => false,
+            'timeout'  => 30,
+        ],
+
+        'ftp_images' => [
+            'driver'   => 'ftp',
+            'host'     => env('FTP_HOST'),
+            'username' => env('FTP_USERNAME'),
+            'password' => env('FTP_PASSWORD'),
+            'port'     => (int) env('FTP_PORT', 21),
+            'root'     => 'Barber-shop/imagenes',
+            'passive'  => true,
+            'ssl'      => false,
+            'timeout'  => 30,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

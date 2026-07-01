@@ -18,6 +18,7 @@ class Producto extends Model
         'proveedor_id',
         'nombre',
         'descripcion',
+        'foto',
         'codigo_barras',
         'precio_compra',
         'precio_venta',

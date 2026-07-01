@@ -58,6 +58,7 @@
             {{-- Links escritorio --}}
             <div class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600 dark:text-gray-300">
                 <a href="#servicios" class="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Servicios</a>
+                <a href="#tienda" class="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Tienda</a>
                 <a href="#equipo" class="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Equipo</a>
                 <a href="#sucursales" class="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Sucursales</a>
                 <a href="#contacto" class="hover:text-amber-500 dark:hover:text-amber-400 transition-colors">Contacto</a>
@@ -82,6 +83,7 @@
         {{-- Menú móvil desplegable --}}
         <div x-show="open" x-cloak @click="open = false" class="md:hidden border-t border-gray-200 dark:border-white/5 bg-white dark:bg-gray-950 px-4 py-3 space-y-1 text-sm">
             <a href="#servicios" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400">Servicios</a>
+            <a href="#tienda" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400">Tienda</a>
             <a href="#equipo" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400">Equipo</a>
             <a href="#sucursales" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400">Sucursales</a>
             <a href="#contacto" class="block py-2 text-gray-600 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400">Contacto</a>
@@ -177,6 +179,88 @@
                     @endforeach
                 </div>
             @endif
+        </div>
+    </section>
+
+    {{-- ════════════ TIENDA ════════════ --}}
+    <section id="tienda" class="scroll-mt-16 py-20 bg-gray-50 dark:bg-gray-900">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6">
+            <div class="text-center mb-12">
+                <span class="inline-block px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase mb-3">
+                    Disponible en sucursales
+                </span>
+                <h2 class="text-3xl font-bold mb-2 text-gray-900 dark:text-white">Tienda</h2>
+                <p class="text-gray-600 dark:text-gray-400">Productos de cuidado profesional para llevar a casa</p>
+            </div>
+
+            @forelse ($productos as $categoria => $items)
+                <div class="mb-12">
+                    <h3 class="text-amber-600 dark:text-amber-400 font-semibold text-sm uppercase tracking-wider mb-5 flex items-center gap-2">
+                        <span class="flex-1 h-px bg-amber-500/20"></span>
+                        {{ $categoria }}
+                        <span class="flex-1 h-px bg-amber-500/20"></span>
+                    </h3>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                        @foreach ($items as $producto)
+                            <div class="group flex flex-col rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 bg-white dark:bg-gray-950 hover:border-amber-400/50 hover:shadow-lg dark:hover:shadow-amber-900/10 transition-all">
+
+                                {{-- Imagen --}}
+                                <div class="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                    @if ($producto->foto)
+                                        @php
+                                            // Si contiene '/' → está en disco public local; si no → está en FTP (proxy)
+                                            $fotoUrl = str_contains($producto->foto, '/')
+                                                ? asset('storage/' . $producto->foto)
+                                                : route('img.producto', $producto->foto);
+                                        @endphp
+                                        <img
+                                            src="{{ $fotoUrl }}"
+                                            alt="{{ $producto->nombre }}"
+                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            loading="lazy"
+                                        >
+                                    @else
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <svg class="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Info --}}
+                                <div class="flex flex-col flex-1 p-4">
+                                    <p class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wider mb-1">
+                                        {{ \App\Models\Producto::categoriaLabel($producto->categoria) }}
+                                    </p>
+                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-snug flex-1">
+                                        {{ $producto->nombre }}
+                                    </h4>
+                                    @if ($producto->descripcion)
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ $producto->descripcion }}</p>
+                                    @endif
+                                    <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-white/5">
+                                        <span class="text-base font-bold text-amber-600 dark:text-amber-400">
+                                            Q{{ number_format($producto->precio_venta, 2) }}
+                                        </span>
+                                        <span class="text-[11px] text-gray-400 dark:text-gray-500">
+                                            {{ $producto->unidad }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <p>Próximamente tendremos productos disponibles.</p>
+                </div>
+            @endforelse
         </div>
     </section>
 
