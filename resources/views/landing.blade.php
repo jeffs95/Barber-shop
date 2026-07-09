@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name') }} · Barbería</title>
     <meta name="description" content="Reserva tu cita en línea. Cortes, barba y más con los mejores barberos.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
     {{-- Aplica el tema guardado ANTES de pintar (evita parpadeo) y define la lógica del switcher --}}
     <script>

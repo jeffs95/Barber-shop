@@ -98,7 +98,14 @@
                 Mis Sucursales
             </h2>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            @php
+                $cols = match(true) {
+                    $this->sucursales->count() >= 3 => 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3',
+                    $this->sucursales->count() === 2 => 'grid-cols-1 sm:grid-cols-2',
+                    default                          => 'grid-cols-1',
+                };
+            @endphp
+            <div class="grid {{ $cols }} gap-4">
                 @foreach ($this->sucursales as $sucursal)
                     <div class="relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
 
