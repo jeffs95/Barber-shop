@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\EmpleadoResource\Pages;
 
 use App\Filament\Resources\EmpleadoResource;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class CreateEmpleado extends CreateRecord
@@ -28,15 +28,22 @@ class CreateEmpleado extends CreateRecord
             return;
         }
 
-        $basename = basename($localPath);
+        $basename  = basename($localPath);
+        $contenido = Storage::disk('public')->get($localPath);
 
         try {
-            $contenido = Storage::disk('public')->get($localPath);
             Storage::disk('ftp_images')->put('empleados/' . $basename, $contenido);
             Storage::disk('public')->delete($localPath);
             $this->record->updateQuietly(['foto' => $basename]);
-        } catch (\Throwable $e) {
-            Log::warning('FTP foto empleado: ' . $e->getMessage());
+        } catch (\Throwable) {
+            Storage::disk('public')->delete($localPath);
+            $this->record->updateQuietly(['foto' => null]);
+
+            Notification::make()
+                ->title('Foto no guardada')
+                ->body('No se pudo conectar al servidor FTP. El empleado se creó sin foto.')
+                ->warning()
+                ->send();
         }
     }
 }

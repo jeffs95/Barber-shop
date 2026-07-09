@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\ProductoResource\Pages;
 
 use App\Filament\Resources\ProductoResource;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class CreateProducto extends CreateRecord
@@ -20,7 +20,6 @@ class CreateProducto extends CreateRecord
     {
         $localPath = $this->record->foto;
 
-        // Solo actuar si hay un path con directorio (archivo recién subido al disco public)
         if (! $localPath || ! str_contains($localPath, '/')) {
             return;
         }
@@ -29,19 +28,22 @@ class CreateProducto extends CreateRecord
             return;
         }
 
-        $basename = basename($localPath);
+        $basename  = basename($localPath);
+        $contenido = Storage::disk('public')->get($localPath);
 
-        // Intentar mover al FTP
         try {
-            $contenido = Storage::disk('public')->get($localPath);
             Storage::disk('ftp_images')->put('productos/' . $basename, $contenido);
             Storage::disk('public')->delete($localPath);
-            // En FTP: foto guarda solo el basename (el proxy añade el directorio)
             $this->record->updateQuietly(['foto' => $basename]);
-        } catch (\Throwable $e) {
-            // FTP no disponible: mantener en disco public, guardar path completo
-            Log::warning('FTP no disponible, imagen queda en disco local: ' . $e->getMessage());
-            // foto queda como "productos/uuid.png" → landing detecta disco local
+        } catch (\Throwable) {
+            Storage::disk('public')->delete($localPath);
+            $this->record->updateQuietly(['foto' => null]);
+
+            Notification::make()
+                ->title('Imagen no guardada')
+                ->body('No se pudo conectar al servidor FTP. El producto se creó sin foto.')
+                ->warning()
+                ->send();
         }
     }
 }

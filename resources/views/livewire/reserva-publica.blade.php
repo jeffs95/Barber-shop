@@ -157,14 +157,49 @@
                     @else
                         <div class="grid sm:grid-cols-2 gap-2">
                             @foreach ($this->barberos as $barbero)
+                                @php
+                                    $fotoUrlBarbero = null;
+                                    if ($barbero->foto) {
+                                        $fotoUrlBarbero = str_contains($barbero->foto, '/')
+                                            ? asset('storage/' . $barbero->foto)
+                                            : route('img.empleado', $barbero->foto);
+                                    }
+                                    $colorBarbero     = $barbero->color_agenda ?? '#f59e0b';
+                                    $estaSeleccionado = $empleadoId === $barbero->id;
+                                @endphp
                                 <button type="button" wire:click="$set('empleadoId', {{ $barbero->id }})"
                                         class="flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all
-                                               {{ $empleadoId === $barbero->id ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-amber-300' }}">
-                                    <span class="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0"
-                                          style="background-color: {{ $barbero->color_agenda ?? '#f59e0b' }}">
-                                        {{ mb_substr($barbero->nombre_completo, 0, 1) }}
-                                    </span>
-                                    <span class="font-medium text-sm">{{ $barbero->nombre_completo }}</span>
+                                               {{ $estaSeleccionado ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-amber-300' }}">
+
+                                    {{-- Avatar circular --}}
+                                    <div class="relative shrink-0">
+                                        <div class="w-12 h-12 rounded-full overflow-hidden ring-2 transition-all
+                                                    {{ $estaSeleccionado ? 'ring-amber-500' : 'ring-transparent' }}">
+                                            @if ($fotoUrlBarbero)
+                                                <img src="{{ $fotoUrlBarbero }}"
+                                                     alt="{{ $barbero->nombre_completo }}"
+                                                     class="w-full h-full object-cover object-top"
+                                                     loading="lazy">
+                                            @else
+                                                <div class="w-full h-full flex items-center justify-center text-lg font-bold text-white/90"
+                                                     style="background-color: {{ $colorBarbero }}">
+                                                    {{ mb_substr($barbero->nombre_completo, 0, 1) }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @if ($estaSeleccionado)
+                                            <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center ring-2 ring-white dark:ring-gray-800">
+                                                <svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                                                </svg>
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <p class="font-semibold text-sm text-gray-900 dark:text-gray-100">{{ $barbero->nombre_completo }}</p>
+                                        <p class="text-[11px] font-medium" style="color: {{ $colorBarbero }}">Barbero</p>
+                                    </div>
                                 </button>
                             @endforeach
                         </div>

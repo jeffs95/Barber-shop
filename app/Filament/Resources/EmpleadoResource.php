@@ -109,7 +109,7 @@ class EmpleadoResource extends Resource
                 ]),
 
             Section::make('Foto de perfil')
-                ->description('Se transfiere al FTP automáticamente al guardar.')
+                ->description('La foto se sube al servidor FTP al guardar. Si el FTP no está disponible se notificará el error.')
                 ->schema([
                     FileUpload::make('foto')
                         ->label('Fotografía')

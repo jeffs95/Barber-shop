@@ -145,7 +145,7 @@ class ProductoResource extends Resource
                 ]),
 
             Section::make('Fotografía del producto')
-                ->description('La imagen se sube localmente y se transfiere al FTP automáticamente al guardar.')
+                ->description('La imagen se sube al servidor FTP al guardar. Si el FTP no está disponible se notificará el error.')
                 ->schema([
                     FileUpload::make('foto')
                         ->label('Imagen')

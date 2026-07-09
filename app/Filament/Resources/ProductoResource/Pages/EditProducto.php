@@ -4,17 +4,25 @@ namespace App\Filament\Resources\ProductoResource\Pages;
 
 use App\Filament\Resources\ProductoResource;
 use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EditProducto extends EditRecord
 {
     protected static string $resource = ProductoResource::class;
 
+    private ?string $fotoAnterior = null;
+
     protected function getHeaderActions(): array
     {
         return [DeleteAction::make()];
+    }
+
+    protected function beforeSave(): void
+    {
+        // Capturar el basename FTP actual antes de que el formulario lo sobreescriba
+        $this->fotoAnterior = $this->record->getOriginal('foto');
     }
 
     protected function afterSave(): void
@@ -26,8 +34,6 @@ class EditProducto extends EditRecord
     {
         $localPath = $this->record->foto;
 
-        // Solo actuar si el valor tiene directorio → archivo recién subido (disco public)
-        // Si es solo basename → ya está en FTP o en local permanente, no mover
         if (! $localPath || ! str_contains($localPath, '/')) {
             return;
         }
@@ -36,15 +42,22 @@ class EditProducto extends EditRecord
             return;
         }
 
-        $basename = basename($localPath);
+        $basename  = basename($localPath);
+        $contenido = Storage::disk('public')->get($localPath);
 
         try {
-            $contenido = Storage::disk('public')->get($localPath);
             Storage::disk('ftp_images')->put('productos/' . $basename, $contenido);
             Storage::disk('public')->delete($localPath);
             $this->record->updateQuietly(['foto' => $basename]);
-        } catch (\Throwable $e) {
-            Log::warning('FTP no disponible, imagen queda en disco local: ' . $e->getMessage());
+        } catch (\Throwable) {
+            Storage::disk('public')->delete($localPath);
+            $this->record->updateQuietly(['foto' => $this->fotoAnterior]);
+
+            Notification::make()
+                ->title('Imagen no guardada')
+                ->body('No se pudo conectar al servidor FTP. Se mantuvo la imagen anterior.')
+                ->warning()
+                ->send();
         }
     }
 }

@@ -175,23 +175,36 @@
                                     ? asset('storage/' . $barbero->foto)
                                     : route('img.empleado', $barbero->foto);
                             }
+                            $colorAgenda = $barbero->color_agenda ?? '#f59e0b';
                         @endphp
-                        <div class="text-center p-6 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-white/5 hover:border-amber-400/40 hover:shadow-md transition-all">
-                            @if ($fotoEmpleado)
-                                <img
-                                    src="{{ $fotoEmpleado }}"
-                                    alt="{{ $barbero->nombre_completo }}"
-                                    class="w-20 h-20 rounded-full object-cover mx-auto mb-3 ring-2 ring-amber-400/30"
-                                    loading="lazy"
-                                >
-                            @else
-                                <span class="inline-flex items-center justify-center w-20 h-20 rounded-full text-2xl font-bold text-gray-950 mb-3"
-                                      style="background-color: {{ $barbero->color_agenda ?? '#f59e0b' }}">
-                                    {{ mb_substr($barbero->nombre_completo, 0, 1) }}
-                                </span>
-                            @endif
-                            <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ $barbero->nombre_completo }}</h4>
-                            <p class="text-xs text-amber-600/90 dark:text-amber-400/80 uppercase tracking-wider mt-1">Barbero</p>
+                        <div class="group flex flex-col rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 bg-white dark:bg-gray-900 hover:border-amber-400/40 hover:shadow-xl dark:hover:shadow-amber-900/10 hover:-translate-y-1 transition-all duration-300">
+
+                            {{-- Franja de color personal del barbero --}}
+                            <div class="h-[3px] shrink-0" style="background-color: {{ $colorAgenda }}"></div>
+
+                            {{-- Foto en formato retrato --}}
+                            <div class="relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                @if ($fotoEmpleado)
+                                    <img
+                                        src="{{ $fotoEmpleado }}"
+                                        alt="{{ $barbero->nombre_completo }}"
+                                        class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                                        loading="lazy"
+                                    >
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center text-5xl font-bold text-white/90"
+                                         style="background-color: {{ $colorAgenda }}">
+                                        {{ mb_substr($barbero->nombre_completo, 0, 1) }}
+                                    </div>
+                                @endif
+                                <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                            </div>
+
+                            {{-- Info --}}
+                            <div class="p-4">
+                                <h4 class="font-bold text-sm leading-tight text-gray-900 dark:text-gray-100">{{ $barbero->nombre_completo }}</h4>
+                                <p class="text-[11px] font-semibold uppercase tracking-widest mt-1" style="color: {{ $colorAgenda }}">Barbero</p>
+                            </div>
                         </div>
                     @endforeach
                 </div>

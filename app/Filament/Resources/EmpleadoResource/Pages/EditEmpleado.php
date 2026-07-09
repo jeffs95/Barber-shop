@@ -3,13 +3,25 @@
 namespace App\Filament\Resources\EmpleadoResource\Pages;
 
 use App\Filament\Resources\EmpleadoResource;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EditEmpleado extends EditRecord
 {
     protected static string $resource = EmpleadoResource::class;
+
+    private ?string $fotoAnterior = null;
+
+    protected function getHeaderActions(): array
+    {
+        return [];
+    }
+
+    protected function beforeSave(): void
+    {
+        $this->fotoAnterior = $this->record->getOriginal('foto');
+    }
 
     protected function afterSave(): void
     {
@@ -28,15 +40,22 @@ class EditEmpleado extends EditRecord
             return;
         }
 
-        $basename = basename($localPath);
+        $basename  = basename($localPath);
+        $contenido = Storage::disk('public')->get($localPath);
 
         try {
-            $contenido = Storage::disk('public')->get($localPath);
             Storage::disk('ftp_images')->put('empleados/' . $basename, $contenido);
             Storage::disk('public')->delete($localPath);
             $this->record->updateQuietly(['foto' => $basename]);
-        } catch (\Throwable $e) {
-            Log::warning('FTP foto empleado: ' . $e->getMessage());
+        } catch (\Throwable) {
+            Storage::disk('public')->delete($localPath);
+            $this->record->updateQuietly(['foto' => $this->fotoAnterior]);
+
+            Notification::make()
+                ->title('Foto no guardada')
+                ->body('No se pudo conectar al servidor FTP. Se mantuvo la imagen anterior.')
+                ->warning()
+                ->send();
         }
     }
 }
