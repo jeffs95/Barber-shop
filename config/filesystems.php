@@ -47,6 +47,13 @@ return [
             'report' => false,
         ],
 
+        // Disco para uploads temporales de Livewire.
+        // Apunta a /tmp del sistema (siempre escribible en Heroku y cualquier server).
+        'livewire_tmp' => [
+            'driver' => 'local',
+            'root'   => sys_get_temp_dir() . '/livewire-tmp',
+        ],
+
         'ftp_documents' => [
             'driver'   => 'ftp',
             'host'     => env('FTP_HOST'),
